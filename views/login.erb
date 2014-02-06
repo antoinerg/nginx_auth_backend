@@ -1,0 +1,20 @@
+<span class="fa-stack fa-3x">
+  <i class="fa fa-circle fa-stack-2x"></i>
+  <i class="fa fa-user fa-stack-1x fa-inverse"></i>
+</span>
+
+<% if @authenticated %>
+<h1>Authenticated!</h1>
+<ul>
+  <li>Provider:<%= session[:provider] %></li>
+  <li>UID:<%= session[:uid] %></li>
+  <li>Name:<%= session[:name] %></li>
+  <li>Email:<%= session[:email] %></li>
+</ul>
+<a href="/logout" class="btn">Logout</a>
+<% else %>
+<h1>Authentication needed</h1>
+<a href='/auth/google<%="?origin=#{@origin}" if @origin %>'><img src="https://raw2.github.com/intridea/authbuttons/master/png/google_64.png"/></a>
+<% end %>
+
+
