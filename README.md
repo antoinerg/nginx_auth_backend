@@ -25,4 +25,4 @@ Domain where this authentication app will run
 List of emails to which access is granted
 
 ### routing
-Key-value that maps a public hostname to an internal location
+Key-value that maps a public hostname to an internal location Nginx will serve
