@@ -4,7 +4,7 @@ require "sinatra/config_file"
 
 class Auth < Sinatra::Base
   register Sinatra::ConfigFile
-  config_file 'config.yml'
+  config_file 'config/config.yml'
 
   # Use a wildcard cookie to achieve single sign-on for all subdomains
   use Rack::Session::Cookie, :secret => settings.cookie["secret"],
