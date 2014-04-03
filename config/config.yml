@@ -2,7 +2,12 @@ cookie:
   secret: "change_me"
   domain: ".antoineroygobeil.com"
 
+auth_domain_proto: "https"
+
 auth_domain: "auth.antoineroygobeil.com"
+
+allowed_email_domains:
+	- yourdomain.com
 
 allowed_email:
   - roygobeil.antoine@gmail.com
