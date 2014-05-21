@@ -1,4 +1,5 @@
 FROM	dockerfile/ruby
+MAINTAINER	roygobeil.antoine@gmail.com
 
 # Update
 RUN apt-get -y update
@@ -6,13 +7,17 @@ RUN apt-get -y update
 # Install supervisor and redis
 RUN apt-get -y install supervisor redis-server
 
-# Manually add src
-RUN mkdir /data/app
-ADD . /data/app
+RUN mkdir /opt/app
+
+# Install dep
+ADD Gemfile /opt/app/
+ADD Gemfile.lock /opt/app/
 
 # Install dependencies
-RUN cd /data/app; /usr/bin/bundle install --deployment --binstubs;ls
-#RUN cd /data/app;bundle install;pwd
+RUN cd /opt/app; /usr/bin/bundle install --deployment --binstubs
+
+# Add src
+ADD . /opt/app
 
 # Add supervisor conf
 ADD ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
