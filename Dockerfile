@@ -23,8 +23,7 @@ ADD . /opt/app
 ADD ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expose nginx and redis
-EXPOSE  80
-EXPOSE  443
+EXPOSE  4000
 EXPOSE  6379
 
 # Start supervisor
