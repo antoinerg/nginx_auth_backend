@@ -1,6 +1,8 @@
 cookie:
-  secret: "MjQwNzcwODRhNTZkMmQ4OWY3ZWExZTcy"
+  secret: "CHANGE_ME"
   domain: ".antoineroygobeil.com"
 
 auth_domain_proto: "https"
 auth_domain: "auth.antoineroygobeil.com"
+
+redis_url: "redis://127.0.0.1:6379/0"

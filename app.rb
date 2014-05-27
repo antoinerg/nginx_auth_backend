@@ -20,7 +20,7 @@ class Auth < Sinatra::Base
   def initialize
     super
     @redis = EventMachine::Synchrony::ConnectionPool.new(size: 4) do
-      Redis.new
+      Redis.new(:url => settings.redis_url)
     end
   end
 
