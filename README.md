@@ -10,13 +10,13 @@ Read this [blog post](http://antoineroygobeil.com/blog/2014/2/6/nginx-ruby-auth/
 
 ## Usage
 
-# Add mapping
+### Add mapping
 hset graphite.antoineroygobeil.com url http://127.0.0.1
 
-# Force secure endpoint
+### Force secure endpoint
 hset graphite.antoineroygobeil.com secure true
 
-# Grant access based on user's email
+### Grant access based on user's email
 sadd acl:graphite.antoineroygobeil.com roygobeil.antoine@gmail.com
 
 ## Configuration
