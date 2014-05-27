@@ -2,4 +2,5 @@ cookie:
   secret: "MjQwNzcwODRhNTZkMmQ4OWY3ZWExZTcy"
   domain: ".antoineroygobeil.com"
 
+auth_domain_proto: "https"
 auth_domain: "auth.antoineroygobeil.com"

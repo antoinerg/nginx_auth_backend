@@ -60,11 +60,13 @@ class Auth < Sinatra::Base
 
       # Authenticate user
       unless authenticated?
-        redirect "https://" + settings.auth_domain + "/?origin=" + request.url
+        redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/?origin=" + request.url
       end
 
       # If authorized, serve request
-      unless authorized?(request)
+      if authorized?(request)
+        headers "X-Remote-User" => session[:email]
+      else
         status 403
         return erb :forbidden
       end
@@ -83,6 +85,14 @@ class Auth < Sinatra::Base
     session[:uid] = auth.uid
     session[:name] = auth.info.name
     session[:email] = auth.info.email
+    
+    # Check IP
+    if request.env.has_key? 'HTTP_X_FORWARDED_FOR'
+      session[:remote_ip] = request.env['HTTP_X_FORWARDED_FOR']
+    else
+      session[:remote_ip] = request.env['HTTP_X_REAL_IP']
+    end
+
     redirect request.env['omniauth.origin'] || "/"
   end
 
@@ -113,7 +123,13 @@ class Auth < Sinatra::Base
   end
 
   def authenticated?
-    if session[:logged]
+    check_remote_ip = nil
+    if request.env.has_key? 'HTTP_X_FORWARDED_FOR'
+      check_remote_ip = request.env['HTTP_X_FORWARDED_FOR']
+    else
+      check_remote_ip = request.env['HTTP_X_REAL_IP']
+    end
+    if session[:logged] == true and session[:remote_ip] == check_remote_ip
       return true
     else
       return false
