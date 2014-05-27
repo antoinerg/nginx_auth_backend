@@ -18,11 +18,17 @@ Secret for the cookie
 #### domain
 Domain for the cookie. You may want to set a wildcard domain.
 
+### auth_domain_proto
+Protocol used for authentication app, http or https
+
 ### auth_domain
 Domain where this authentication app will run
 
+### allowed_email_domains
+List of email domains for which access is granted. Can be used in combination with or separate to allowed_email
+
 ### allowed_email
-List of emails to which access is granted
+List of specific email addresses to which access is granted. Can be used in combination with or separate to allowed_email_domains
 
 ### routing
 Key-value that maps a public hostname to an internal location Nginx will serve

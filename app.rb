@@ -20,11 +20,12 @@ class Auth < Sinatra::Base
     pass if request.host == settings.auth_domain
     # Authenticate user
     unless authenticated?
-      redirect "https://" + settings.auth_domain + "/?origin=" + request.url
+      redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/?origin=" + request.url
     end
 
     # If authorized, serve request
     if url = authorized?(request.host)
+      headers "X-Remote-User" => session[:email]
       headers "X-Reproxy-URL" => url + request.fullpath
       headers "X-Accel-Redirect" => "/reproxy"
       return ""
@@ -42,6 +43,11 @@ class Auth < Sinatra::Base
     session[:uid] = auth.uid
     session[:name] = auth.info.name
     session[:email] = auth.info.email
+    if request.env.has_key? 'HTTP_X_FORWARDED_FOR'
+      session[:remote_ip] = request.env['HTTP_X_FORWARDED_FOR']
+    else
+      session[:remote_ip] = request.env['HTTP_X_REAL_IP']
+    end
     redirect request.env['omniauth.origin'] || "/"
   end
 
@@ -60,7 +66,13 @@ class Auth < Sinatra::Base
   end
 
   def authenticated?
-    if session[:logged]
+    check_remote_ip = nil
+    if request.env.has_key? 'HTTP_X_FORWARDED_FOR'
+      check_remote_ip = request.env['HTTP_X_FORWARDED_FOR']
+    else
+      check_remote_ip = request.env['HTTP_X_REAL_IP']
+    end
+    if session[:logged] == true and session[:remote_ip] == check_remote_ip
       return true
     else
       return false
@@ -69,8 +81,18 @@ class Auth < Sinatra::Base
 
   # Return internal URL or false if unauthorized
   def authorized?(host)
+    authorized = false
     # Check whether the email address is authorized
-    if settings.allowed_email.include?(session[:email]) & settings.routing.key?(host)
+    if ! session.has_key? :email
+      return false
+    end
+    split_email_address = session[:email].split('@')
+    if defined? settings.allowed_email_domains and settings.allowed_email_domains.include? split_email_address.last
+      authorized = true
+    elsif defined? settings.allowed_email and settings.allowed_email.include? session[:email]
+      authorized = true
+    end
+    if authorized == true and settings.routing.has_key? host
       return settings.routing[host]
     else
       return false
