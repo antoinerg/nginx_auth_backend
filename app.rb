@@ -12,6 +12,7 @@ require 'rack/fiber_pool'
 require 'uri'
 
 class Auth < Sinatra::Base
+  set :protection, :except => :path_traversal
   register Sinatra::ConfigFile
   config_file 'config/config.yml'
 
@@ -72,7 +73,7 @@ class Auth < Sinatra::Base
       end
     end
 
-    headers "X-Reproxy-URL" => URI.join(url,request.fullpath).to_s
+    headers "X-Reproxy-URL" => url+request.fullpath
     headers "X-Accel-Redirect" => "/reproxy"
     return ""
   end
