@@ -13,11 +13,20 @@ Read this [blog post](http://antoineroygobeil.com/blog/2014/2/6/nginx-ruby-auth/
 ### Add mapping
 hset graphite.antoineroygobeil.com url http://127.0.0.1
 
-### Force secure endpoint
-hset graphite.antoineroygobeil.com secure true
+### Force endpoint through SSL
+hset graphite.antoineroygobeil.com ssl true
+
+### Make endpoint public (a blog for example)
+hset graphite.antoineroygobeil.com public true
 
 ### Grant access based on user's email
-sadd acl:graphite.antoineroygobeil.com roygobeil.antoine@gmail.com
+sadd email:roygobeil.antoine@gmail.com ^photo.*
+
+### Grant access based on authkey parameter
+sadd authkey:some_random_string ^graphite.* ^files.*
+
+### Grant access based on IP or netmask
+sadd ip:192.168.1.0/24 ^sickbeard\.antoineroygobeil\.com*
 
 ## Configuration
 

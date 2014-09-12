@@ -32,3 +32,7 @@ a:link.btn, a:visited.btn {
 .btn:hover {
 	background:lighten(#BF0222, 3%);
 }
+
+div.message {
+	margin-top:50px;
+}

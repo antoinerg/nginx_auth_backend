@@ -4,3 +4,10 @@
 </span>
 <h1>Private</h1>
 <p>Sorry but this section is restricted!</p>
+
+<% if @message %>
+<div class="message">
+<h2>Message</h3>
+<p><%= @message %></p>
+</div>
+<% end %>
