@@ -107,7 +107,7 @@ class Auth < Sinatra::Base
   end
 
   get '/' do
-    @origin = CGI.unescape(params[:origin])
+    @origin = CGI.escape(params[:origin])
     @authenticated = authenticated?
     erb :login
   end
