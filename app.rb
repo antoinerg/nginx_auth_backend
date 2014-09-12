@@ -49,6 +49,7 @@ class Auth < Sinatra::Base
     # Do we have a mapping for this
     if url = map(request)
     else
+      status 404
       return  erb :nothing
     end
 
@@ -61,7 +62,7 @@ class Auth < Sinatra::Base
 
       # Authenticate user
       unless authenticated?
-        redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/?origin=" + request.url
+        redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/?origin=" + CGI.escape(request.url)
       end
 
       # If authorized, serve request
@@ -106,7 +107,7 @@ class Auth < Sinatra::Base
   end
 
   get '/' do
-    @origin = params[:origin]
+    @origin = CGI.unescape(params[:origin])
     @authenticated = authenticated?
     erb :login
   end
