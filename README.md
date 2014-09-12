@@ -4,7 +4,7 @@ Authentication backend to use in conjunction with Nginx
 
 ## What is it?
 
-It is a simple Sinatra application that authenticates user via Google's OpenID endpoint using Omniauth. Whenever a request comes in, it checks whether the user's email is whitelisted and if so, instructs Nginx to serve the request.
+It is a simple Sinatra application that authenticates user via IP address, an authkey parameter sent along the request URL or finally with Google's OpenID endpoint using Omniauth. Whenever a request comes in, it checks regex expressions store in Redis to check whether any match the request URL and if so, it instructs Nginx to serve the request.
 
 Read this [blog post](http://antoineroygobeil.com/blog/2014/2/6/nginx-ruby-auth/) for more information.
 
