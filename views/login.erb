@@ -14,6 +14,7 @@
 <a href="/logout" class="btn">Logout</a>
 <% else %>
 <h1>Authentication needed</h1>
+<h2>Log in using one the providers below:</h2>
 <a href='/auth/google<%="?origin=#{@origin}" if @origin %>'><img src="https://raw2.github.com/intridea/authbuttons/master/png/google_64.png"/></a>
 <% end %>
 
