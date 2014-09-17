@@ -8,7 +8,28 @@ It is a simple Sinatra application that authenticates user via IP address, an au
 
 Read this [blog post](http://antoineroygobeil.com/blog/2014/2/6/nginx-ruby-auth/) for more information.
 
+## Configuration
+
+Update the config.yml with your settings.
+
+### cookie
+#### secret
+Secret for the cookie
+#### domain
+Domain for the cookie. You may want to set a wildcard domain.
+
+### auth_domain
+Domain where this authentication app will run
+
+### redis
+Connection for Redis
+
+## Build Docker image
+sudo docker build -t nginx_auth_backend .
+
 ## Usage
+To run commands on your Redis server you can use:
+sudo docker run nginx_auth_backend cli redis_command
 
 ### Add mapping
 hset graphite.antoineroygobeil.com url http://127.0.0.1
@@ -30,19 +51,3 @@ sadd ip:192.168.1.0/24 ^sickbeard\.antoineroygobeil\.com*
 
 ### Expire access
 Using Redis EXPIRE on a key is a great way of temporarily grant access!
-
-## Configuration
-
-Update the config.yml with your settings.
-
-### cookie
-#### secret
-Secret for the cookie
-#### domain
-Domain for the cookie. You may want to set a wildcard domain.
-
-### auth_domain
-Domain where this authentication app will run
-
-### redis_url
-URL to the Redis database

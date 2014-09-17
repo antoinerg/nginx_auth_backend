@@ -1,0 +1,13 @@
+#!/usr/bin/ruby
+
+require 'rubygems'
+require 'bundler/setup'
+
+require 'yaml'
+
+settings=YAML.load(File.read(File.join(File.dirname(__FILE__),"..","config","config.yml")))
+
+cmd = "redis-cli -h #{settings['redis']['host']} -p #{settings['redis']['port']} -n #{settings['redis']['db']} #{ARGV.join(' ')}"
+
+puts cmd
+system(cmd)

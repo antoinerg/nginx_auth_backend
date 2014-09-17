@@ -5,4 +5,7 @@ cookie:
 auth_domain_proto: "https"
 auth_domain: "auth.antoineroygobeil.com"
 
-redis_url: "redis://127.0.0.1:6379/0"
+redis: 
+  host: "127.0.0.1"
+  port: 6379
+  db: 0

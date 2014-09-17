@@ -24,7 +24,10 @@ ADD ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expose nginx and redis
 EXPOSE  4000
-EXPOSE  6379
+
+env PATH /opt/app/bin:$PATH
+
+WORKDIR /opt/app
 
 # Start supervisor
 CMD ["supervisord", "-n"]
