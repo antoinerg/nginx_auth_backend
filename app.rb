@@ -71,6 +71,7 @@ class Auth < Sinatra::Base
     if ssl?(request)
       if request.scheme == "http"
         headers "X-Accel-Redirect" => "/secure"
+        headers "Content-Type" => ""
         return ""
       end
     end
@@ -101,6 +102,7 @@ class Auth < Sinatra::Base
     # Reaching this point means the user is authorized
     headers "X-Reproxy-URL" => url+request.fullpath
     headers "X-Accel-Redirect" => "/reproxy"
+    headers "Content-Type" => ""
     return ""
   end
 
