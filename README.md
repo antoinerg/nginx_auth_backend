@@ -15,6 +15,9 @@ Update the config.yml with your settings.
 ### cookie
 #### secret
 Secret for the cookie
+
+  openssl rand -base64 128
+  
 #### domain
 Domain for the cookie. You may want to set a wildcard domain.
 
