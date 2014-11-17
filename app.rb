@@ -17,6 +17,7 @@ $log.level = Logger::DEBUG
 
 class Auth < Sinatra::Base
   set :protection, :except => :path_traversal
+  set :static, :false
   register Sinatra::ConfigFile
   config_file 'config/config.yml'
 
