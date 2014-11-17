@@ -4,9 +4,6 @@ MAINTAINER	roygobeil.antoine@gmail.com
 # Update
 RUN apt-get -y update
 
-# Install supervisor and redis
-RUN apt-get -y install supervisor redis-server
-
 RUN mkdir /opt/app
 
 # Install dep
@@ -19,15 +16,11 @@ RUN cd /opt/app; /usr/bin/bundle install --deployment --binstubs
 # Add src
 ADD . /opt/app
 
-# Add supervisor conf
-ADD ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Expose nginx and redis
+# Expose thin
 EXPOSE  4000
 
 env PATH /opt/app/bin:$PATH
 
 WORKDIR /opt/app
 
-# Start supervisor
-CMD ["supervisord", "-n"]
+CMD ["/opt/app/bin/thin","-c","/opt/app","-e","production","-p","4000","start"]
