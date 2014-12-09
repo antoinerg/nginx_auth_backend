@@ -41,7 +41,7 @@ class Auth < Sinatra::Base
   end
 
   # Catch all requests
-  route :get, :post, '*' do
+  route :get, :post, :options, :delete, :put, '*' do
     #
     if request.host == settings.auth_domain
       if request.scheme == "http"
