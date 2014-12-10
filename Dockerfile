@@ -4,6 +4,8 @@ MAINTAINER	roygobeil.antoine@gmail.com
 # Update
 RUN apt-get -y update
 
+RUN apt-get install -y redis-server
+
 RUN mkdir /opt/app
 
 # Install dep
