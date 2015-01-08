@@ -41,7 +41,7 @@ class Auth < Sinatra::Base
   end
 
   # Catch all requests
-  route :get, :post, :options, :delete, :put, '*' do
+  route :head, :get, :post, :options, :delete, :put, '*' do
     #
     if request.host == settings.auth_domain
       if request.scheme == "http"
@@ -77,28 +77,33 @@ class Auth < Sinatra::Base
       end
     end
 
-    unless public?(request)
-      # Site is not public
-      unless key_access?(request)
-        # Access with key is denied
-        unless ip_access?(request)
-          # Access by IP is denied
+    unless request.options?
+      # Not an option request
+      unless public?(request)
+        # Site is not public
+        unless key_access?(request)
+          # Access with key is denied
+          unless ip_access?(request)
+            # Access by IP is denied
 
-          unless authenticated?
-            # User not authenticated via omniauth
-            redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/?origin=" + CGI.escape(request.url)
-          end
+            unless authenticated?
+              # User not authenticated via omniauth
+              redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/?origin=" + CGI.escape(request.url)
+            end
 
-          # At this stage, user is logged in via omniauth
-          if authorized?(request,"email:#{session[:email]}")
-            headers "X-Remote-User" => session[:email]
-          else
-            status 403
-            return erb :forbidden
+            # At this stage, user is logged in via omniauth
+            unless authorized?(request,"email:#{session[:email]}")
+              status 403
+              return erb :forbidden
+            end
           end
         end
       end
     end
+
+    # Send as much info as possible
+    $log.debug("Logged: #{session[:logged]}")
+    headers "X-Remote-User" => session[:email] if session[:logged]
 
     # Reaching this point means the user is authorized
     headers "X-Reproxy-URL" => url+request.fullpath
