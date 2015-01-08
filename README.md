@@ -37,8 +37,8 @@ sudo docker run nginx_auth_backend cli redis_command
 ### Add mapping
 hset graphite.antoineroygobeil.com url http://127.0.0.1
 
-### Force endpoint through SSL
-hset graphite.antoineroygobeil.com ssl true
+### Allow unsecure connections (SSL is enabled by default)
+hset graphite.antoineroygobeil.com ssl false
 
 ### Make endpoint public (a blog for example)
 hset graphite.antoineroygobeil.com public true
