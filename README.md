@@ -54,3 +54,7 @@ sadd ip:192.168.1.0/24 ^sickbeard\.antoineroygobeil\.com*
 
 ### Expire access
 Using Redis EXPIRE on a key is a great way of temporarily grant access!
+
+## Nginx configuration
+
+Check the [example Nginx config](example_nginx_config) this application expects.
