@@ -2,7 +2,6 @@ require "sinatra/base"
 require 'sinatra/synchrony'
 require "omniauth-openid"
 require "sinatra/config_file"
-require "sinatra/multi_route"
 
 require 'redis/connection/hiredis'
 require 'redis/connection/synchrony'
@@ -40,75 +39,42 @@ class Auth < Sinatra::Base
     provider :open_id, :name => 'google', :identifier => 'https://www.google.com/accounts/o8/id'
   end
 
-  # Catch all requests
-  route :head, :get, :post, :options, :delete, :put, '*' do
-    #
-    if request.host == settings.auth_domain
-      if request.scheme == "http"
-        headers "X-Accel-Redirect" => "/secure"
-        return ""
-      end
-      pass
-    end
-
-    # Destroy transmitted key if over HTTP
-    if key = params[:authkey]
-      if request.scheme == "http"
-        status 403
-        @redis.del("authkey:#{key}")
-        @message = "This authentication key was transmitted over HTTP and was removed from our registry as it may have been compromised."
-        return erb :forbidden
-      end
-    end
+  # Map host and apply ACL
+  get '/host' do
 
     # Do we have a mapping for this
     if url = map(request)
+      $log.debug("Mapping to: #{url}")
     else
+      headers "Cache-Control" => "max-age=10"
       status 404
-      return  erb :nothing
+      return erb :nothing
     end
 
-    # Serve website securely?
-    if ssl?(request)
-      if request.scheme == "http"
-        headers "X-Accel-Redirect" => "/secure"
-        headers "Content-Type" => ""
-        return ""
-      end
-    end
-
-    unless request.options?
-      # Not an option request
-      unless public?(request)
-        # Site is not public
-        unless key_access?(request)
-          # Access with key is denied
-          unless ip_access?(request)
-            # Access by IP is denied
-
-            unless authenticated?
-              # User not authenticated via omniauth
-              redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/?origin=" + CGI.escape(request.url)
-            end
-
-            # At this stage, user is logged in via omniauth
-            unless authorized?(request,"email:#{session[:email]}")
-              status 403
-              return erb :forbidden
-            end
-          end
+    unless public?(request)
+      # Site is not public
+      headers "Vary" => "X-Remote-User, X-Forwarded-For"
+      unless ip_access?(request)
+        # Access by IP is denied
+        if x_remote_user == "anonymous"
+          # User not authenticated and site is not public so redirect
+          redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/?origin=" + CGI.escape(request.url)
         end
+
+        # At this stage, user is authenticated in via omniauth
+        unless authorized?(request,"email:#{x_remote_user}")
+          headers "Cache-Control" => "max-age=10"
+          headers "Vary" => "X-Remote-User, X-Forwarded-For"
+          status 403
+          return erb :forbidden
+        end    
       end
     end
-
-    # Send as much info as possible
-    $log.debug("Logged: #{session[:logged]}")
-    headers "X-Remote-User" => session[:email] if session[:logged]
 
     # Reaching this point means the user is authorized
-    headers "X-Reproxy-URL" => url+request.fullpath
-    headers "X-Accel-Redirect" => "/reproxy"
-    headers "Content-Type" => ""
+    headers "Cache-Control" => "max-age=10"
+    headers "X-Reproxy-Host" => url
+    headers "X-Accel-Redirect" => "@proxy"
     return ""
   end
 
@@ -139,13 +105,27 @@ class Auth < Sinatra::Base
     redirect "/"
   end
 
+  get "/check" do
+    headers "Cache-Control" => "max-age=600"
+    if authenticated?
+      headers "X-Remote-User" => session[:email]
+      return ""
+    else
+      headers "X-Remote-User" => "anonymous"
+      return ""
+    end
+  end
+
   get '/' do
-    @origin = CGI.escape(params[:origin]) if params[:origin]
+    url = CGI.escape(params[:origin]) if params[:origin]
+    referer = CGI.escape(env["HTTP_REFERER"]) if env["HTTP_REFERER"]
+    @origin = referer || url
     @authenticated = authenticated?
     erb :login
   end
 
   def map(req)
+    host = req.env['HTTP_X_FORWARDED_HOST'] || req.host
     url = @redis.hget(req.host,"url")
     return url
   end
@@ -194,6 +174,23 @@ class Auth < Sinatra::Base
   end
 end
 
+def x_remote_user?
+  #if session[:logged] == true and session[:remote_ip] == check_remote_ip
+  if request.env.has_key? 'HTTP_X_REMOTE_USER'
+    return true
+  else
+    return false
+  end
+end
+
+def x_remote_user
+  env["HTTP_X_REMOTE_USER"] || "anonymous"
+end
+
+def ip
+  request.env['HTTP_X_FORWARDED_FOR'] || request.env['HTTP_X_REAL_IP']
+end
+
 def authenticated?
   check_remote_ip = nil
   if request.env.has_key? 'HTTP_X_FORWARDED_FOR'
@@ -201,7 +198,8 @@ def authenticated?
   else
     check_remote_ip = request.env['HTTP_X_REAL_IP']
   end
-  if session[:logged] == true and session[:remote_ip] == check_remote_ip
+  if session[:logged] == true # and session[:remote_ip] == check_remote_ip
+  #if request.env.has_key? 'HTTP_X_REMOTE_USER'
     return true
   else
     return false
@@ -211,11 +209,12 @@ end
 # Return internal URL or false if unauthorized
 def authorized?(request,entry)
   url = request.url.gsub(/^https?:\/\//,'')
+  host = request.host
   # Check whether the email address is authorized
   @redis.smembers(entry).each do |reg|
     begin
       $log.debug("Checking #{url} versus #{reg}")
-      return true if !!(Regexp.new(reg) =~ url)
+      return true if !!(Regexp.new(reg) =~ host)
     rescue
       $log.error("Malformed regex expressions in database")
     end
