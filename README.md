@@ -32,3 +32,7 @@ List of specific email addresses to which access is granted. Can be used in comb
 
 ### routing
 Key-value that maps a public hostname to an internal location Nginx will serve
+
+## Nginx configuration
+
+Check the [example Nginx config](example_nginx_config) this application expects.
