@@ -44,17 +44,11 @@ sudo docker run nginx_auth_backend cli redis_command
 ### Add mapping
 hset graphite.antoineroygobeil.com url http://127.0.0.1
 
-### Allow unsecure connections (SSL is enabled by default)
-hset graphite.antoineroygobeil.com ssl false
-
 ### Make endpoint public (a blog for example)
 hset graphite.antoineroygobeil.com public true
 
 ### Grant access based on user's email
 sadd email:roygobeil.antoine@gmail.com ^photo.*
-
-### Grant access based on authkey parameter
-sadd authkey:some_random_string ^graphite.* ^files.*
 
 ### Grant access based on IP or netmask
 sadd ip:192.168.1.0/24 ^sickbeard\.antoineroygobeil\.com*
