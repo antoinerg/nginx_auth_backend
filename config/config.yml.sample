@@ -5,6 +5,10 @@ cookie:
 auth_domain_proto: "https"
 auth_domain: "auth.antoineroygobeil.com"
 
+cache:
+  cookie: "600"
+  host: "10"
+  
 redis: 
   host: "127.0.0.1"
   port: 6379

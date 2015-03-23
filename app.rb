@@ -20,8 +20,6 @@ class Auth < Sinatra::Base
   register Sinatra::ConfigFile
   config_file 'config/config.yml'
 
-  register Sinatra::MultiRoute
-
   def initialize
     super
     @redis = EventMachine::Synchrony::ConnectionPool.new(size: 4) do
@@ -39,14 +37,25 @@ class Auth < Sinatra::Base
     provider :open_id, :name => 'google', :identifier => 'https://www.google.com/accounts/o8/id'
   end
 
+  # Set X-Remote-User if user is logged in
+  get "/check" do
+    headers "Cache-Control" => "max-age=#{settings.cache["cookie"]}"
+    if authenticated?
+      headers "X-Remote-User" => session[:email]
+      return ""
+    else
+      headers "X-Remote-User" => "anonymous"
+      return ""
+    end
+  end
+
   # Map host and apply ACL
   get '/host' do
-
+    headers "Cache-Control" => "max-age=#{settings.cache["host"]}"
     # Do we have a mapping for this
     if url = map(request)
       $log.debug("Mapping to: #{url}")
     else
-      headers "Cache-Control" => "max-age=10"
       status 404
       return erb :nothing
     end
@@ -63,8 +72,6 @@ class Auth < Sinatra::Base
 
         # At this stage, user is authenticated in via omniauth
         unless authorized?(request,"email:#{x_remote_user}")
-          headers "Cache-Control" => "max-age=10"
-          headers "Vary" => "X-Remote-User, X-Forwarded-For"
           status 403
           return erb :forbidden
         end    
@@ -72,9 +79,7 @@ class Auth < Sinatra::Base
     end
 
     # Reaching this point means the user is authorized
-    headers "Cache-Control" => "max-age=10"
     headers "X-Reproxy-Host" => url
-    headers "X-Accel-Redirect" => "@proxy"
     return ""
   end
 
@@ -105,27 +110,18 @@ class Auth < Sinatra::Base
     redirect "/"
   end
 
-  get "/check" do
-    headers "Cache-Control" => "max-age=600"
-    if authenticated?
-      headers "X-Remote-User" => session[:email]
-      return ""
-    else
-      headers "X-Remote-User" => "anonymous"
-      return ""
-    end
-  end
-
   get '/' do
     url = CGI.escape(params[:origin]) if params[:origin]
-    referer = CGI.escape(env["HTTP_REFERER"]) if env["HTTP_REFERER"]
-    @origin = referer || url
+    #referer = CGI.escape(env["HTTP_REFERER"]) if env["HTTP_REFERER"]
+    #@origin = referer || url
+    @origin = url
     @authenticated = authenticated?
     erb :login
   end
 
   def map(req)
     host = req.env['HTTP_X_FORWARDED_HOST'] || req.host
+    puts "Check mapping for #{host}"
     url = @redis.hget(req.host,"url")
     return url
   end
