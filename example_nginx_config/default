@@ -1,0 +1,162 @@
+# Default
+
+# SSL certificates;
+ssl_certificate                 /etc/ssl/host.pem;
+ssl_certificate_key             /etc/ssl/host.key;
+
+# SSL Poodle fix
+ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;  # don’t use SSLv3 ref: POODLE
+
+# set DNS;
+resolver 10.10.1.1;
+
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
+# Redirect HTTP to HTTPS;
+server {
+  listen 80;
+  server_name _;
+  return 301 https://$host$request_uri;
+}
+
+# Cache path
+proxy_cache_path /opt/nginx/cache/cookie keys_zone=cookie:10m inactive=5h max_size=1G;
+proxy_cache_path /opt/nginx/cache/host keys_zone=host:10m inactive=5h max_size=1G;
+proxy_cache_path /opt/nginx/cache/external keys_zone=external:10m inactive=5h max_size=1G;
+
+# Main block
+server {
+	listen 443 ssl default_server;
+	server_name _;
+
+	location / {
+		default_type 'text/html';
+		access_by_lua '
+		-- Clear x-remote-user and x-private
+		ngx.req.clear_header("X-Remote-User")
+		ngx.req.clear_header("X-Private")
+
+		-- Set x-remote-user by doing subrequest to auth backend
+		-- if cookie
+			local res = ngx.location.capture("/check");
+			if res.status == ngx.HTTP_OK then
+				ngx.req.set_header("X-Remote-User",res.header["X-Remote-User"]);
+			else
+				ngx.req.set_header("X-Remote-User","anonymous");
+			end
+
+		-- if API key, /auth_api_key
+
+
+		-- Get backend, forbidden or redirect
+		res = ngx.location.capture("/host");
+		if res.status == ngx.HTTP_OK then
+			ngx.req.set_header("X-Reproxy-Host",res.header["X-Reproxy-Host"]);
+			ngx.exec("@proxy_host");
+		elseif res.status == ngx.HTTP_NOT_FOUND then
+			ngx.status = res.status;
+			ngx.say(res.body);
+		elseif res.status == ngx.HTTP_FORBIDDEN then
+			ngx.status = res.status;
+			ngx.say(res.body);
+		elseif res.status == ngx.HTTP_MOVED_TEMPORARILY then
+			local url = ngx.var.scheme .. "://" .. ngx.var.host .. ngx.var.request_uri; 
+			ngx.redirect("https://auth.antoineroygobeil.com/?origin=" .. ngx.escape_uri(url),302);
+		else
+			-- Backend is down
+			ngx.exec("/down.html");
+		end;
+		';
+	}
+
+	location @proxy_host {
+		internal;
+
+		set $private $upstream_http_x_private;
+		set $q $upstream_http_x_reproxy_url;
+
+		proxy_pass $http_x_reproxy_host$q;
+
+		proxy_set_header X-Reproxy-Host $http_x_reproxy_host;
+		proxy_set_header X-Private $private;
+		proxy_hide_header X-Private;
+
+		proxy_set_header X-Forwarded-Proto $scheme;
+	    	proxy_set_header X-Forwarded-Host $host;
+    		proxy_set_header X-Real-IP $remote_addr;
+   	 	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+    		proxy_intercept_errors on;
+    		error_page 500 502 /down.html;
+	}
+
+	location @proxy_url {
+		internal;
+		set $q $upstream_http_x_reproxy_url;
+
+		proxy_pass $q;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_set_header X-Forwarded-Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+		proxy_cache external;
+		proxy_cache_methods GET HEAD;
+		proxy_cache_revalidate on;
+  		proxy_cache_key "$q";
+		proxy_cache_lock on;
+		proxy_cache_use_stale error updating;
+		proxy_cache_valid 200	1m;
+
+		add_header X-Cache-Status $upstream_cache_status;
+
+		proxy_intercept_errors on;
+		error_page 500 502 503 504 /down.html;
+	}
+
+	location /host {
+		internal;
+		access_log  logs/host.log  timed_combined;
+
+		proxy_pass https://auth.antoineroygobeil.com/host;
+
+		proxy_cache host;
+		proxy_cache_key "$host";
+		proxy_cache_lock on;
+		proxy_cache_use_stale error updating;
+
+		proxy_set_header X-Forwarded-Proto $scheme;
+	    proxy_set_header X-Forwarded-Host $host;
+	    proxy_set_header X-Real-IP $remote_addr;
+	    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+		proxy_ignore_headers X-Accel-Redirect;
+
+		proxy_intercept_errors on;
+	}
+
+	location /check {
+		internal;
+		access_log  logs/check.log  timed_combined;
+
+		proxy_pass https://auth.antoineroygobeil.com/check;	
+
+		set $cookie "no-cookie";
+		if ($http_cookie ~* "rack.session=(\S*)") {
+			set $cookie $1;
+		}
+		proxy_cache_key "$cookie";
+		proxy_cache cookie;
+		proxy_cache_lock on;
+		proxy_cache_use_stale http_502 updating; 
+
+		proxy_ignore_headers X-Accel-Redirect;
+	}
+
+	location /down.html {
+		root html;
+	}
+}

@@ -27,6 +27,13 @@ Domain where this authentication app will run
 ### redis
 Connection for Redis
 
+### cache
+#### cookie
+Time in seconds to cache authentication check via cookie
+
+#### host
+Time in seconds to cache authorization and mapping for a given host
+
 ## Build Docker image
 sudo docker build -t nginx_auth_backend .
 
@@ -54,3 +61,7 @@ sadd ip:192.168.1.0/24 ^sickbeard\.antoineroygobeil\.com*
 
 ### Expire access
 Using Redis EXPIRE on a key is a great way of temporarily grant access!
+
+## Nginx configuration
+
+Check the [example Nginx config](example_nginx_config) this application expects.
