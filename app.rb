@@ -62,7 +62,8 @@ class Auth < Sinatra::Base
 
     unless public?(request)
       # Site is not public
-      headers "Vary" => "X-Remote-User, X-Forwarded-For"
+      headers "Vary" => "X-Remote-User, X-Forwarded-For, X-Method"
+      unless request.env["HTTP_X_METHOD"].downcase == "options"
       unless ip_access?(request)
         # Access by IP is denied
         if x_remote_user == "anonymous"
@@ -75,6 +76,7 @@ class Auth < Sinatra::Base
           status 403
           return erb :forbidden
         end    
+      end
       end
     end
 

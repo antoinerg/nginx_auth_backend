@@ -52,6 +52,7 @@ server {
 
 
 		-- Get backend, forbidden or redirect
+		ngx.req.set_header("X-Method",ngx.var.request_method);
 		res = ngx.location.capture("/host");
 		if res.status == ngx.HTTP_OK then
 			ngx.req.set_header("X-Reproxy-Host",res.header["X-Reproxy-Host"]);
