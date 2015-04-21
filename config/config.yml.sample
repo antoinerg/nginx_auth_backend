@@ -5,6 +5,11 @@ cookie:
 auth_domain_proto: "https"
 auth_domain: "auth.antoineroygobeil.com"
 
+providers:
+  google:
+    client_id: "CHANGE_ME"
+    client_secret: "CHANGE_ME"
+
 cache:
   cookie: "600"
   host: "10"

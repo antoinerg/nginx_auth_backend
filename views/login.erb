@@ -15,7 +15,7 @@
 <% else %>
 <h1>Authentication needed</h1>
 <h2>Log in using one the providers below:</h2>
-<a href='/auth/google<%="?origin=#{@origin}" if @origin %>'><img src="https://raw.githubusercontent.com/intridea/authbuttons/master/png/google_64.png"/></a>
+<a href='/auth/google_oauth2<%="?origin=#{@origin}" if @origin %>'><img src="https://raw.githubusercontent.com/intridea/authbuttons/master/png/google_64.png"/></a>
 <% end %>
 
 

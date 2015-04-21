@@ -1,6 +1,6 @@
 require "sinatra/base"
 require 'sinatra/synchrony'
-require "omniauth-openid"
+require 'omniauth-google-oauth2'
 require "sinatra/config_file"
 
 require 'redis/connection/hiredis'
@@ -32,9 +32,10 @@ class Auth < Sinatra::Base
     :domain => settings.cookie["domain"],
     :secure => true
 
+  google = settings.providers["google"]
   # Perform authentication against Google OpenID endpoint
   use OmniAuth::Builder do
-    provider :open_id, :name => 'google', :identifier => 'https://www.google.com/accounts/o8/id'
+    provider :google_oauth2, google["client_id"], google["client_secret"]
   end
 
   # Set X-Remote-User if user is logged in
@@ -52,6 +53,7 @@ class Auth < Sinatra::Base
   # Map host and apply ACL
   get '/host' do
     headers "Cache-Control" => "max-age=#{settings.cache["host"]}"
+    $log.debug("Method: #{request.env["HTTP_X_METHOD"]}")
     # Do we have a mapping for this
     if url = map(request)
       $log.debug("Mapping to: #{url}")
