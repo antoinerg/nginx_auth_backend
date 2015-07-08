@@ -115,6 +115,7 @@ class Auth < Sinatra::Base
   end
 
   get '/' do
+    puts request.env
     url = CGI.escape(params[:origin]) if params[:origin]
     #referer = CGI.escape(env["HTTP_REFERER"]) if env["HTTP_REFERER"]
     #@origin = referer || url

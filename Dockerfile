@@ -1,4 +1,4 @@
-FROM	dockerfile/ruby
+FROM	ruby
 MAINTAINER	roygobeil.antoine@gmail.com
 
 # Update
@@ -13,7 +13,7 @@ ADD Gemfile /opt/app/
 ADD Gemfile.lock /opt/app/
 
 # Install dependencies
-RUN cd /opt/app; /usr/bin/bundle install --deployment --binstubs
+RUN cd /opt/app; bundle install --deployment --binstubs
 
 # Add src
 ADD . /opt/app
