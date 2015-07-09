@@ -69,6 +69,8 @@ class Auth < Sinatra::Base
       unless ip_access?(request)
         # Access by IP is denied
         if x_remote_user == "anonymous"
+	  $log.debug("Everything is denied and user is anonymous...")
+	  $log.debug("Redirecting to authentication app")
           # User not authenticated and site is not public so redirect
           redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/?origin=" + CGI.escape(request.url)
         end
@@ -115,7 +117,6 @@ class Auth < Sinatra::Base
   end
 
   get '/' do
-    puts request.env
     url = CGI.escape(params[:origin]) if params[:origin]
     #referer = CGI.escape(env["HTTP_REFERER"]) if env["HTTP_REFERER"]
     #@origin = referer || url
