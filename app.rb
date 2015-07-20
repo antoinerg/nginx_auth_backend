@@ -38,6 +38,8 @@ class Auth < Sinatra::Base
     provider :google_oauth2, google["client_id"], google["client_secret"]
   end
 
+  OmniAuth.config.full_host = settings.auth_domain_proto + "://" + settings.auth_domain
+
   # Set X-Remote-User if user is logged in
   get "/check" do
     headers "Cache-Control" => "max-age=#{settings.cache["cookie"]}"
@@ -105,7 +107,7 @@ class Auth < Sinatra::Base
       session[:remote_ip] = request.env['HTTP_X_REAL_IP']
     end
 
-    redirect request.env['omniauth.origin'] || "/"
+    redirect request.env['omniauth.origin'] || settings.auth_domain_proto + "://" + settings.auth_domain + "/"
   end
 
   get '/auth/:name/callback', &process
@@ -113,7 +115,7 @@ class Auth < Sinatra::Base
 
   get '/logout' do
     session.clear
-    redirect "/"
+    redirect settings.auth_domain_proto + "://" + settings.auth_domain + "/"
   end
 
   get '/' do

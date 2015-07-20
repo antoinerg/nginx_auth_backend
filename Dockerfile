@@ -19,10 +19,10 @@ RUN cd /opt/app; bundle install --deployment --binstubs
 ADD . /opt/app
 
 # Expose thin
-EXPOSE  4000
+#EXPOSE  4000
 
 env PATH /opt/app/bin:$PATH
 
 WORKDIR /opt/app
 
-CMD ["/opt/app/bin/thin","-c","/opt/app","-e","production","-p","4000","start"]
+CMD ["/opt/app/bin/thin","-c","/opt/app","-e","production","-p","80","start"]
